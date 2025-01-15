@@ -1,12 +1,17 @@
 package br.ifrn.edu.jeferson.ecommerce.service;
 
 import br.ifrn.edu.jeferson.ecommerce.domain.Categoria;
+import br.ifrn.edu.jeferson.ecommerce.domain.Produto;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Categoria.CategoriaRequestDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Categoria.CategoriaResponseDTO;
+import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Produto.ProdutoResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.exception.BusinessException;
 import br.ifrn.edu.jeferson.ecommerce.exception.ResourceNotFoundException;
 import br.ifrn.edu.jeferson.ecommerce.mapper.CategoriaMapper;
+import br.ifrn.edu.jeferson.ecommerce.mapper.ProdutoMapper;
 import br.ifrn.edu.jeferson.ecommerce.repository.CategoriaRepository;
+import br.ifrn.edu.jeferson.ecommerce.repository.ProdutoRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +26,12 @@ public class CategoriaService {
     private CategoriaMapper mapper;
     @Autowired
     private CategoriaMapper categoriaMapper;
+
+    @Autowired
+    private ProdutoRepository produtoRepository;
+
+    @Autowired
+    private ProdutoMapper produtoMapper;
 
     public CategoriaResponseDTO salvar(CategoriaRequestDTO categoriaDto) {
         var categoria =  mapper.toEntity(categoriaDto);
@@ -61,6 +72,38 @@ public class CategoriaService {
     public CategoriaResponseDTO buscarPorId(Long id) {
         Categoria categoria = categoriaRepository.findById(id).orElseThrow( () -> new ResourceNotFoundException("Categoria não encontrada"));
         return categoriaMapper.toResponseDTO(categoria);
+    }
+
+    @Transactional
+    public ProdutoResponseDTO bindCategory(Long cat_id, Long pro_id){
+        Categoria categoria = categoriaRepository.findById(cat_id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
+
+        Produto produto = produtoRepository.findById(pro_id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
+
+        categoria.getProdutos().add(produto);
+        produto.getCategorias().add(categoria);
+        Produto saved_produto = produtoRepository.save(produto);
+        categoriaRepository.save(categoria);
+
+        return produtoMapper.toResponseDTO(saved_produto);
+    }
+
+    @Transactional
+    public ProdutoResponseDTO removeCategoryBind(Long cat_id, Long pro_id){
+        Categoria categoria = categoriaRepository.findById(cat_id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
+
+        Produto produto = produtoRepository.findById(pro_id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
+
+        categoria.getProdutos().remove(produto);
+        produto.getCategorias().remove(categoria);
+        Produto saved_produto = produtoRepository.save(produto);
+        categoriaRepository.save(categoria);
+
+        return produtoMapper.toResponseDTO(saved_produto);
     }
 
 }

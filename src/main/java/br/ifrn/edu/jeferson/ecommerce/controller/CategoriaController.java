@@ -2,6 +2,7 @@ package br.ifrn.edu.jeferson.ecommerce.controller;
 
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Categoria.CategoriaRequestDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Categoria.CategoriaResponseDTO;
+import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Produto.ProdutoResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.service.CategoriaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,4 +45,21 @@ public class CategoriaController {
         return ResponseEntity.ok(categoriaService.atualizar(id, categoriaDto));
     }
 
+    @Operation(summary = "Consulta uma categoria")
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoriaResponseDTO> consultar(@PathVariable Long id) {
+        return ResponseEntity.ok(categoriaService.buscarPorId(id));
+    }
+
+    @Operation(summary = "Associa produto a categoria")
+    @PostMapping("/{cat_id}/produtos/{pro_id}")
+    public ResponseEntity<ProdutoResponseDTO> associaProduto(@PathVariable Long cat_id, @PathVariable Long pro_id) {
+        return ResponseEntity.ok(categoriaService.bindCategory(cat_id, pro_id));
+    }
+
+    @Operation(summary = "Remover produto da categoria")
+    @DeleteMapping("/{cat_id}/produtos/{pro_id}")
+    public ResponseEntity<ProdutoResponseDTO> dessasociarProduto(@PathVariable Long cat_id, @PathVariable Long pro_id) {
+        return ResponseEntity.ok(categoriaService.removeCategoryBind(cat_id, pro_id));
+    }
 }
