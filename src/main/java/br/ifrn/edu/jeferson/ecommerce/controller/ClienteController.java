@@ -2,6 +2,7 @@ package br.ifrn.edu.jeferson.ecommerce.controller;
 
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Cliente.ClienteRequestDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Cliente.ClienteResponseDTO;
+import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Pedido.PedidoResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.service.ClienteService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,5 +58,11 @@ public class ClienteController {
     public ResponseEntity<Void> deletarCliente(@PathVariable Long id) {
         clienteService.deletarCliente(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}/pedidos")
+    @Operation(summary = "Lista pedidos do cliente")
+    public ResponseEntity<Page<PedidoResponseDTO>> listarPedidos(@PathVariable Long id, Pageable pageable) {
+        return ResponseEntity.ok(clienteService.listarPedidos(id, pageable));
     }
 }

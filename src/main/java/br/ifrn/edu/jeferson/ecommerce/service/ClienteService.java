@@ -2,15 +2,20 @@ package br.ifrn.edu.jeferson.ecommerce.service;
 
 import br.ifrn.edu.jeferson.ecommerce.domain.Cliente;
 import br.ifrn.edu.jeferson.ecommerce.domain.Endereco;
+import br.ifrn.edu.jeferson.ecommerce.domain.Pedido;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Cliente.ClienteRequestDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Cliente.ClienteResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Endereco.EnderecoRequestDTO;
+import br.ifrn.edu.jeferson.ecommerce.domain.dtos.ItemPedido.ItemPedidoResponseDTO;
+import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Pedido.PedidoResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.exception.BusinessException;
 import br.ifrn.edu.jeferson.ecommerce.exception.ResourceNotFoundException;
 import br.ifrn.edu.jeferson.ecommerce.mapper.ClienteMapper;
 import br.ifrn.edu.jeferson.ecommerce.mapper.EnderecoMapper;
+import br.ifrn.edu.jeferson.ecommerce.mapper.PedidoMapper;
 import br.ifrn.edu.jeferson.ecommerce.repository.ClienteRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.EnderecoRepository;
+import br.ifrn.edu.jeferson.ecommerce.repository.PedidoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,6 +36,11 @@ public class ClienteService {
 
     @Autowired
     private ClienteMapper clienteMapper;
+
+    @Autowired
+    private PedidoRepository pedidoRepository;
+    @Autowired
+    private PedidoMapper pedidoMapper;
 
     @Transactional
     public ClienteResponseDTO cadastrarCliente(ClienteRequestDTO clienteRequestDTO) {
@@ -114,5 +124,12 @@ public class ClienteService {
 
         enderecoRepository.delete(cliente.getEndereco());
         clienteRepository.delete(cliente);
+    }
+
+    public Page<PedidoResponseDTO> listarPedidos(Long id, Pageable pageable) {
+        Cliente cliente = clienteRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado"));
+        Page<Pedido> pedidos = pedidoRepository.findByClienteId(id, pageable);
+        return pedidos.map(pedidoMapper::toResponseDTO);
     }
 }
