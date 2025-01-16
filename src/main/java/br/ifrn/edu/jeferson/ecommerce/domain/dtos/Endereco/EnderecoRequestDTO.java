@@ -27,7 +27,7 @@ public class EnderecoRequestDTO {
     private String rua;
 
     @Schema(description = "Número")
-    private Integer numero;
+    private String numero;
 
     @Schema(description = "ID de Cliente")
     private long clienteId;

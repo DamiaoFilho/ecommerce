@@ -1,6 +1,5 @@
 package br.ifrn.edu.jeferson.ecommerce.domain.dtos.Endereco;
 
-import br.ifrn.edu.jeferson.ecommerce.domain.Cliente;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,11 +8,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Schema(description = "DTO de Resposta de Endereço")
-public class EnderecoResponseDTO {
-
-    @Schema(description = "ID")
-    private Long id;
+@Schema(description = "DTO de Requisição de Endereço")
+public class EnderecoRequestNoClientDTO {
 
     @Schema(description = "CEP")
     private String cep;
@@ -32,8 +28,5 @@ public class EnderecoResponseDTO {
 
     @Schema(description = "Número")
     private String numero;
-
-    @Schema(description = "ID de Cliente")
-    private String cliente;
 
 }
