@@ -122,6 +122,10 @@ public class ClienteService {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado"));
 
+        if(cliente.getPedidos() != null || !cliente.getPedidos().isEmpty()){
+            throw new BusinessException("Cliente Possui Pedidos");
+        }
+
         enderecoRepository.delete(cliente.getEndereco());
         clienteRepository.delete(cliente);
     }

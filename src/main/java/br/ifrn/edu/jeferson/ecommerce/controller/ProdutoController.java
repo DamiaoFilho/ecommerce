@@ -1,14 +1,20 @@
 package br.ifrn.edu.jeferson.ecommerce.controller;
 
+import br.ifrn.edu.jeferson.ecommerce.domain.Produto;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Produto.ProdutoRequestDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Produto.ProdutoResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.service.ProdutoService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import net.kaczmarzyk.spring.data.jpa.domain.LessThanOrEqual;
+import net.kaczmarzyk.spring.data.jpa.domain.LikeIgnoreCase;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -70,9 +76,15 @@ public class ProdutoController {
     @GetMapping
     @Operation(summary = "Listar todos os produtos", description = "Lista todos os produtos.")
     public ResponseEntity<Page<ProdutoResponseDTO>> list(
-            Pageable pageable
+            Pageable pageable,
+            @And({
+                    @Spec(path = "nome", spec = LikeIgnoreCase.class),
+                    @Spec(path = "preco", spec = LessThanOrEqual.class),
+                    @Spec(path = "estoque", spec = LessThanOrEqual.class),
+            })
+            Specification<Produto> specification
     ) {
-        Page<ProdutoResponseDTO> produtos = produtoService.listAllProdutos(pageable);
+        Page<ProdutoResponseDTO> produtos = produtoService.listAllProdutos(pageable, specification);
         return ResponseEntity.ok(produtos);
     }
 }

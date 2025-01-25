@@ -1,16 +1,21 @@
 package br.ifrn.edu.jeferson.ecommerce.controller;
 
+import br.ifrn.edu.jeferson.ecommerce.domain.Pedido;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Pedido.PedidoRequestDTO;
 import br.ifrn.edu.jeferson.ecommerce.domain.dtos.Pedido.PedidoResponseDTO;
 import br.ifrn.edu.jeferson.ecommerce.service.PedidoService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import net.kaczmarzyk.spring.data.jpa.domain.Equal;
+import net.kaczmarzyk.spring.data.jpa.domain.EqualDay;
+import net.kaczmarzyk.spring.data.jpa.domain.LessThanOrEqual;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.And;
+import net.kaczmarzyk.spring.data.jpa.web.annotation.Spec;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -32,8 +37,16 @@ public class PedidoController {
 
     @Operation(summary = "Listar todos os pedidos", description = "Retorna uma lista paginada de todos os pedidos.")
     @GetMapping
-    public ResponseEntity<Page<PedidoResponseDTO>> listar(Pageable pageable) {
-        Page<PedidoResponseDTO> pedidos = pedidoService.listar(pageable);
+    public ResponseEntity<Page<PedidoResponseDTO>> listar(
+            Pageable pageable,
+            @And({
+                @Spec(path = "valorTotal", spec = LessThanOrEqual.class),
+                @Spec(path = "dataPedido", spec = EqualDay.class),
+                @Spec(path = "statusPedido", spec = Equal.class),
+            })
+            Specification<Pedido> specification
+    ) {
+        Page<PedidoResponseDTO> pedidos = pedidoService.listar(pageable, specification);
         return ResponseEntity.ok(pedidos);
     }
 

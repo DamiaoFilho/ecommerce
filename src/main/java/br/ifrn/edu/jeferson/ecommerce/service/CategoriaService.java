@@ -50,10 +50,14 @@ public class CategoriaService {
     }
 
     public void deletar(Long id) {
-        if (!categoriaRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Categoria não encontrada");
+        Categoria cat = categoriaRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada"));
+
+        if (cat.getProdutos() != null || !cat.getProdutos().isEmpty()) {
+            throw new BusinessException("Existem produtos associados com essa categoria");
         }
-        categoriaRepository.deleteById(id);
+
+        categoriaRepository.delete(cat);
     }
 
     public CategoriaResponseDTO atualizar(Long id, CategoriaRequestDTO categoriaDto) {

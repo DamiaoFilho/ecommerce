@@ -16,6 +16,7 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -63,8 +64,8 @@ public class PedidoService {
         return pedidoMapper.toResponseDTO(new_pedido);
     }
 
-    public Page<PedidoResponseDTO> listar(Pageable pageable) {
-        Page<Pedido> pedidos = pedidoRepository.findAll(pageable);
+    public Page<PedidoResponseDTO> listar(Pageable pageable, Specification<Pedido> spec) {
+        Page<Pedido> pedidos = pedidoRepository.findAll(spec, pageable);
 
         return pedidos.map(pedidoMapper::toResponseDTO);
     }
@@ -80,7 +81,34 @@ public class PedidoService {
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado"));
 
-        pedido.setStatusPedido(StatusPedido.valueOf(status));
+        StatusPedido novoStatus = StatusPedido.valueOf(status);
+
+        StatusPedido statusAtual = pedido.getStatusPedido();
+
+        switch (statusAtual) {
+            case AGUARDANDO:
+                if (novoStatus != StatusPedido.PAGO && novoStatus != StatusPedido.CANCELADO) {
+                    throw new BusinessException("A transição de status de 'AGUARDANDO' só pode ser para 'PAGO' ou 'CANCELADO'.");
+                }
+                break;
+
+            case PAGO:
+                if (novoStatus != StatusPedido.ENVIADO) {
+                    throw new BusinessException("A transição de status de 'PAGO' só pode ser para 'ENVIADO'.");
+                }
+                break;
+
+            case ENVIADO:
+                throw new BusinessException("O status 'ENVIADO' é final e não pode ser alterado.");
+
+            case CANCELADO:
+                throw new BusinessException("O status 'CANCELADO' é final e não pode ser alterado.");
+
+            default:
+                throw new BusinessException("Status atual inválido: " + statusAtual);
+        }
+
+        pedido.setStatusPedido(novoStatus);
 
         Pedido updated_pedido = pedidoRepository.save(pedido);
 
