@@ -18,6 +18,7 @@ import br.ifrn.edu.jeferson.ecommerce.repository.EnderecoRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.PedidoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -75,6 +76,7 @@ public class ClienteService {
         return clienteMapper.toResponseDTO(new_cliente);
     }
 
+    @Cacheable(value = "clientess")
     public Page<ClienteResponseDTO> listarClientes(Pageable pageable) {
         Page<Cliente> clientes = clienteRepository.findAll(pageable);
         return clientes.map(clienteMapper::toResponseDTO);

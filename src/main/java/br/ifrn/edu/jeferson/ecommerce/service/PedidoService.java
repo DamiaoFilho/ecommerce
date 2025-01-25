@@ -14,6 +14,7 @@ import br.ifrn.edu.jeferson.ecommerce.repository.ItemPedidoRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.PedidoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -64,6 +65,7 @@ public class PedidoService {
         return pedidoMapper.toResponseDTO(new_pedido);
     }
 
+    @Cacheable(value = "pedidos")
     public Page<PedidoResponseDTO> listar(Pageable pageable, Specification<Pedido> spec) {
         Page<Pedido> pedidos = pedidoRepository.findAll(spec, pageable);
 
@@ -115,6 +117,7 @@ public class PedidoService {
         return pedidoMapper.toResponseDTO(updated_pedido);
     }
 
+    @Cacheable(value = "pedidosCliente")
     public Page<PedidoResponseDTO> listByCliente(Long id, Pageable pageable) {
         Cliente cliente = clienteRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado"));

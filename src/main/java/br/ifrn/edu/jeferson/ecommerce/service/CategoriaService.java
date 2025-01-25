@@ -13,6 +13,7 @@ import br.ifrn.edu.jeferson.ecommerce.repository.CategoriaRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.ProdutoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,6 +25,7 @@ public class CategoriaService {
 
     @Autowired
     private CategoriaMapper mapper;
+
     @Autowired
     private CategoriaMapper categoriaMapper;
 
@@ -44,6 +46,7 @@ public class CategoriaService {
         return mapper.toResponseDTO(categoria);
     }
 
+    @Cacheable(value = "categorias")
     public List<CategoriaResponseDTO> lista(){
         List<Categoria> categorias = categoriaRepository.findAll();
         return mapper.toDTOList (categorias);

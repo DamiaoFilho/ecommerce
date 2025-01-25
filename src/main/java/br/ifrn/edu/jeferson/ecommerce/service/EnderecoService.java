@@ -11,6 +11,7 @@ import br.ifrn.edu.jeferson.ecommerce.mapper.EnderecoMapper;
 import br.ifrn.edu.jeferson.ecommerce.repository.ClienteRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.EnderecoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -45,6 +46,7 @@ public class EnderecoService {
         return enderecoMapper.toResponseDTO(endereco);
     }
 
+    @Cacheable(value = "enderecos")
     public List<EnderecoResponseDTO> listar() {
         List<Endereco> enderecos = enderecoRepository.findAll();
         return enderecoMapper.toEnderecosDTOList(enderecos);

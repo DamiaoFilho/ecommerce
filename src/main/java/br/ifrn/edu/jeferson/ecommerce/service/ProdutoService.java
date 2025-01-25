@@ -11,6 +11,7 @@ import br.ifrn.edu.jeferson.ecommerce.repository.CategoriaRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.ProdutoRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
@@ -73,11 +74,13 @@ public class ProdutoService {
         return produtoMapper.toResponseDTO(updated_produto);
     }
 
+    @Cacheable(value = "produtosCategorias")
     public Page<ProdutoResponseDTO> listByCategorias(Long id, Pageable pageable) {
         Page<Produto> produtos = produtoRepository.findByCategoriasId(id, pageable);
         return produtos.map(produtoMapper::toResponseDTO);
     };
 
+    @Cacheable(value = "produtos")
     public Page<ProdutoResponseDTO> listAllProdutos(Pageable pageable, Specification<Produto> specification) {
         Page<Produto> produtos = produtoRepository.findAll(specification, pageable);
         return produtos.map(produtoMapper::toResponseDTO);
