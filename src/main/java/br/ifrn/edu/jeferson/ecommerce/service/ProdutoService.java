@@ -10,6 +10,8 @@ import br.ifrn.edu.jeferson.ecommerce.mapper.ProdutoMapper;
 import br.ifrn.edu.jeferson.ecommerce.repository.CategoriaRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.ProdutoRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;

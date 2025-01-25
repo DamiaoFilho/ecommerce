@@ -19,6 +19,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -37,31 +39,52 @@ public class PedidoService {
     @Autowired
     private ClienteRepository clienteRepository;
 
+    private static final Logger logger = LoggerFactory.getLogger(PedidoService.class);
+
     @Transactional
     public PedidoResponseDTO salvar(PedidoRequestDTO pedidoRequestDTO) {
+        logger.info("Iniciando o processo de criação de pedido para o cliente com ID: {}", pedidoRequestDTO.getClienteId());
+
         Cliente cliente = clienteRepository.findById(pedidoRequestDTO.getClienteId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente não encontrado"));
+                .orElseThrow(() -> {
+                    logger.error("Cliente com ID {} não encontrado", pedidoRequestDTO.getClienteId());
+                    return new ResourceNotFoundException("Cliente não encontrado");
+                });
+
+        logger.info("Cliente encontrado: {}", cliente.getNome());
 
         List<ItemPedido> itemPedidos = itemPedidoRepository.findAllById(pedidoRequestDTO.getItens());
+        logger.info("Itens do pedido localizados. Quantidade de itens: {}", itemPedidos.size());
 
         Pedido pedido = pedidoMapper.toEntity(pedidoRequestDTO);
         pedido.setStatusPedido(StatusPedido.valueOf("AGUARDANDO"));
         pedido.setCliente(cliente);
-        pedido.setValorTotal(new BigDecimal(0));
+        pedido.setValorTotal(BigDecimal.ZERO);
+
+        logger.info("Pedido inicializado com status 'AGUARDANDO' e valor total inicial de 0");
 
         for (ItemPedido itemPedido : itemPedidos) {
-            if(itemPedido.getPedido() == null){
+            if (itemPedido.getPedido() == null) {
+                logger.info("Processando item de pedido. ID: {}, Quantidade: {}, Valor unitário: {}",
+                        itemPedido.getId(), itemPedido.getQuantidade(), itemPedido.getValorUnitario());
+
                 pedido.getItens().add(itemPedido);
 
-                BigDecimal total_value = itemPedido.getValorUnitario().multiply(BigDecimal.valueOf(itemPedido.getQuantidade()));
-                pedido.setValorTotal(pedido.getValorTotal().add(total_value));
+                BigDecimal totalValue = itemPedido.getValorUnitario().multiply(BigDecimal.valueOf(itemPedido.getQuantidade()));
+                pedido.setValorTotal(pedido.getValorTotal().add(totalValue));
                 itemPedido.setPedido(pedido);
-            }else{
+
+                logger.info("Item adicionado ao pedido. ID do item: {}. Valor total do pedido atualizado para: {}",
+                        itemPedido.getId(), pedido.getValorTotal());
+            } else {
+                logger.error("Item de pedido já possui pedido associado. ID do item: {}", itemPedido.getId());
                 throw new BusinessException("Item de pedido já possui pedido. ID: " + itemPedido.getId());
             }
         }
 
         Pedido new_pedido = pedidoRepository.save(pedido);
+        logger.info("Pedido salvo com sucesso no banco de dados. ID do pedido: {}", new_pedido.getId());
+
         return pedidoMapper.toResponseDTO(new_pedido);
     }
 
@@ -80,34 +103,43 @@ public class PedidoService {
     }
 
     public PedidoResponseDTO update(Long id, String status) {
+        logger.info("Iniciando atualização do pedido com ID: {}", id);
+
         Pedido pedido = pedidoRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado"));
 
         StatusPedido novoStatus = StatusPedido.valueOf(status);
+
+        logger.info("Validando transição de status. Status atual: {}, Novo status: {}", pedido.getStatusPedido(), novoStatus);
 
         StatusPedido statusAtual = pedido.getStatusPedido();
 
         switch (statusAtual) {
             case AGUARDANDO:
                 if (novoStatus != StatusPedido.PAGO && novoStatus != StatusPedido.CANCELADO) {
-                    throw new BusinessException("A transição de status de 'AGUARDANDO' só pode ser para 'PAGO' ou 'CANCELADO'.");
+                    logger.warn("Transição inválida de 'AGUARDANDO' para '{}'", novoStatus);
+                    throw new IllegalStateException("A transição de status de 'AGUARDANDO' só pode ser para 'PAGO' ou 'CANCELADO'.");
                 }
                 break;
 
             case PAGO:
                 if (novoStatus != StatusPedido.ENVIADO) {
-                    throw new BusinessException("A transição de status de 'PAGO' só pode ser para 'ENVIADO'.");
+                    logger.warn("Transição inválida de 'PAGO' para '{}'", novoStatus);
+                    throw new IllegalStateException("A transição de status de 'PAGO' só pode ser para 'ENVIADO'.");
                 }
                 break;
 
             case ENVIADO:
-                throw new BusinessException("O status 'ENVIADO' é final e não pode ser alterado.");
+                logger.warn("Tentativa de alterar status final 'ENVIADO'");
+                throw new IllegalStateException("O status 'ENVIADO' é final e não pode ser alterado.");
 
             case CANCELADO:
-                throw new BusinessException("O status 'CANCELADO' é final e não pode ser alterado.");
+                logger.warn("Tentativa de alterar status final 'CANCELADO'");
+                throw new IllegalStateException("O status 'CANCELADO' é final e não pode ser alterado.");
 
             default:
-                throw new BusinessException("Status atual inválido: " + statusAtual);
+                logger.error("Status atual inválido: {}", statusAtual);
+                throw new IllegalStateException("Status atual inválido: " + statusAtual);
         }
 
         pedido.setStatusPedido(novoStatus);

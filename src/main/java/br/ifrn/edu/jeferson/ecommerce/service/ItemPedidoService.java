@@ -9,6 +9,8 @@ import br.ifrn.edu.jeferson.ecommerce.exception.ResourceNotFoundException;
 import br.ifrn.edu.jeferson.ecommerce.mapper.ItemPedidoMapper;
 import br.ifrn.edu.jeferson.ecommerce.repository.ItemPedidoRepository;
 import br.ifrn.edu.jeferson.ecommerce.repository.ProdutoRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -28,12 +30,25 @@ public class ItemPedidoService {
     @Autowired
     private ItemPedidoMapper itemPedidoMapper;
 
+    private static final Logger logger = LoggerFactory.getLogger(ItemPedidoService.class);
+
     @Transactional
     public ItemPedidoResponseDTO create(ItemPedidoRequestDTO itemPedidoRequestDTO) {
-        Produto produto = produtoRepository.findById(itemPedidoRequestDTO.getProdutoId())
-                .orElseThrow(() -> new ResourceNotFoundException("Produto não encontrado"));
+        logger.info("Iniciando criação de ItemPedido para Produto ID: {} e Quantidade: {}",
+                itemPedidoRequestDTO.getProdutoId(), itemPedidoRequestDTO.getQuantidade());
 
-        if(produto.getEstoque() < itemPedidoRequestDTO.getQuantidade()){
+        Produto produto = produtoRepository.findById(itemPedidoRequestDTO.getProdutoId())
+                .orElseThrow(() -> {
+                    logger.error("Produto com ID {} não encontrado", itemPedidoRequestDTO.getProdutoId());
+                    return new ResourceNotFoundException("Produto não encontrado");
+                });
+
+        System.out.println("OOOOPPAAA");
+        logger.info("Produto encontrado: {}. Estoque atual: {}", produto.getNome(), produto.getEstoque());
+
+        if (produto.getEstoque() < itemPedidoRequestDTO.getQuantidade()) {
+            logger.error("Produto com ID {} não possui quantidade suficiente em estoque. Estoque disponível: {}, Quantidade solicitada: {}",
+                    produto.getId(), produto.getEstoque(), itemPedidoRequestDTO.getQuantidade());
             throw new BusinessException("Produto não possui quantidade em estoque");
         }
 
@@ -41,9 +56,13 @@ public class ItemPedidoService {
         itemPedido.setProduto(produto);
         produto.setEstoque(produto.getEstoque() - itemPedido.getQuantidade());
 
+        logger.info("ItemPedido criado. Produto ID: {}, Quantidade: {}, Estoque atualizado: {}",
+                produto.getId(), itemPedido.getQuantidade(), produto.getEstoque());
+
         ItemPedido savedItemPedido = itemPedidoRepository.save(itemPedido);
         produtoRepository.save(produto);
 
+        logger.info("ItemPedido salvo com sucesso no banco de dados. ID do ItemPedido: {}", savedItemPedido.getId());
         return itemPedidoMapper.toResponseDTO(savedItemPedido);
     }
 
